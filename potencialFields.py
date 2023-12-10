@@ -22,7 +22,14 @@ def get_rep_force(q, people, R):
 def on_click(event):
     global goals, q
     n_goals = np.random.randint(1, NPEOPLE - 1)
-    goals = [np.array([np.random.uniform(-WORLD, WORLD), np.random.uniform(-WORLD, WORLD)]) for _ in range(n_goals)]
+    MIN_DISTANCE_BETWEEN_GOALS = 50  # Define a distância mínima entre os objetivos
+    goals = []
+
+    while len(goals) < n_goals:
+        potential_goal = np.array([np.random.uniform(-WORLD, WORLD), np.random.uniform(-WORLD, WORLD)])
+        if all(np.linalg.norm(potential_goal - other_goal) >= MIN_DISTANCE_BETWEEN_GOALS for other_goal in goals):
+            goals.append(potential_goal)
+
     for i in range(NPEOPLE):
         goal_idx = np.random.choice(len(goals))
         q[i] = np.append(q[i][:2], goal_idx)
@@ -62,7 +69,7 @@ while True:
     plt.grid()
 
     current_time = time.time()
-    if current_time - last_goal_change_time >= 30:
+    if current_time - last_goal_change_time >= 15:
         random_person = np.random.randint(0, NPEOPLE)
         new_goal_idx = np.random.choice(len(goals))
         q[random_person][2] = new_goal_idx
