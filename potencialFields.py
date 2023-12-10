@@ -36,7 +36,6 @@ def generate_robots(n, WORLD):
         q.append([x, y, goal_idx])
     return np.array(q)
 
-
 def drawObs(ax, obs):
   for o in obs:
     ax.add_patch(patches.Circle((o[0], o[1]), o[2], color='k'))
