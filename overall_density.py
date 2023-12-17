@@ -5,11 +5,11 @@ import itertools
 import pickle
 
 from sklearn.neighbors import KDTree
-from sklearn.cluster import DBSCAN
 from scipy.signal import medfilt
 from person import Person
 from matplotlib import cm
 from math import *
+
 
 class OverallDensity(object):
     #
@@ -232,30 +232,5 @@ class OverallDensity(object):
                 est.append(np.array([list(component)], dtype=np.uint8))
         return est
     
-    def recalculate_social_zones(self):
-        """Recalcula as zonas sociais com base nas novas posições."""
-        # Usando DBSCAN para identificar clusters baseados na proximidade
-        coords = np.vstack((self.x, self.y)).T
-        clustering = DBSCAN(eps=self.proxemics_th, min_samples=1).fit(coords)
-        self.labels = clustering.labels_
-
-        # Calculando o centro e o raio de cada cluster
-        self.zones = {}
-        for label in np.unique(self.labels):
-            if label != -1:  # Ignorando outliers
-                indices = np.where(self.labels == label)[0]
-                members = coords[indices]
-                center = np.mean(members, axis=0)
-                radius = np.max(np.linalg.norm(members - center, axis=1)) + 5  # Raio + margem
-                self.zones[label] = {'center': center, 'radius': radius}
-
-    def draw_social_zones(self, ax):
-        """Desenha as zonas sociais no eixo fornecido."""
-        for zone in self.zones.values():
-            circle = plt.Circle(zone['center'], zone['radius'], color='blue', fill=False, linestyle='--')
-            ax.add_patch(circle)
-
-    def update_positions(self, people):
-        """Atualiza as posições com base em uma lista de objetos Person."""
-        self.x = np.array([person.x for person in people])
-        self.y = np.array([person.y for person in people])
+    def update_people(self, new_people):
+        self.person = new_people

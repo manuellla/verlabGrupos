@@ -9,14 +9,15 @@ def generate_people(n, WORLD):
         x = np.random.uniform(-WORLD, WORLD)
         y = np.random.uniform(-WORLD, WORLD)
         goal_idx = 0 
-        q.append([x, y, goal_idx])
+        id_node = i 
+        q.append([x, y, goal_idx, id_node])
     return np.array(q)
 
 def drawPeople(ax, robots, goals, R):
     for robot in robots:
-        x, y, goal_idx = robot
+        x, y, goal_idx, id_node = robot 
         goal = goals[int(goal_idx)]
         th = np.arctan2(goal[1] - y, goal[0] - x)
-        person = Person(x, y, th)
+        person = Person(x, y, th, id_node)
         person.draw(draw_personal_space=True)
 

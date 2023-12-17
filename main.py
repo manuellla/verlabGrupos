@@ -3,6 +3,9 @@ import numpy as np
 import time
 from people import generate_people, drawPeople
 from obstacles import generate_obstacles, drawObs
+from person import Person
+
+from overall_density import OverallDensity
 
 def att_force(q, goal, katt=.01):
     return katt*(goal - q)    
@@ -22,7 +25,7 @@ def get_rep_force(q, people, R):
 def on_click(event):
     global goals, q
     n_goals = np.random.randint(1, NPEOPLE - 1)
-    MIN_DISTANCE_BETWEEN_GOALS = 50  # Define a distância mínima entre os objetivos
+    MIN_DISTANCE_BETWEEN_GOALS = 50  
     goals = []
 
     while len(goals) < n_goals:
@@ -32,15 +35,22 @@ def on_click(event):
 
     for i in range(NPEOPLE):
         goal_idx = np.random.choice(len(goals))
-        q[i] = np.append(q[i][:2], goal_idx)
+        id_node = q[i][3] 
+        q[i] = np.array([q[i][0], q[i][1], goal_idx, id_node])
 
 # Inicialização
-NPEOPLE = 10
-WORLD   = 300.0
+NPEOPLE = 3
+WORLD   = 400
 R       = 30  # Sensor range
 goals = [np.array([0, 0]), np.array([0, 0])]
 
 q = generate_people(NPEOPLE, WORLD)
+
+people = [Person(x, y, th, id_node) for x, y, th, id_node in q]
+G = OverallDensity(person=people, zone='Personal', map_resolution=400, window_size=1)
+G.make_graph()
+G.boundary_estimate()
+G.draw(drawDensity=False, drawCluster=True, drawGraph=False)
 
 k = 0.03
 max_force = 2.0
@@ -51,6 +61,7 @@ plt.ion()
 
 fig = plt.figure()
 ax = fig.add_subplot(111, aspect='equal')
+ax.set_autoscale_on(False)
 plt.grid()
 
 drawPeople(ax, q, goals, R)
@@ -63,13 +74,13 @@ t = 0
 last_goal_change_time = time.time()
 start_time = time.time()
 
-# Loop principal
+
 while True:
     ax.cla()
     plt.grid()
 
     current_time = time.time()
-    if current_time - last_goal_change_time >= 15:
+    if current_time - last_goal_change_time >= 10000:
         random_person = np.random.randint(0, NPEOPLE)
         new_goal_idx = np.random.choice(len(goals))
         q[random_person][2] = new_goal_idx
@@ -89,6 +100,13 @@ while True:
         ax.arrow(q[i][0], q[i][1], 20*at[0], 20*at[1], color='g')
         ax.arrow(q[i][0], q[i][1], 20*rep[0], 20*rep[1], color='r')
         ax.arrow(q[i][0], q[i][1], 20*ui[0], 20*ui[1], color='b')
+        
+    people = [Person(x, y, th, id_node) for x, y, th, id_node in q]
+
+    G.update_people(people)
+    G.make_graph()
+    G.boundary_estimate()
+    G.draw(drawDensity=False, drawCluster=True, drawGraph=False)
 
     drawPeople(ax, q, goals, R)
 
