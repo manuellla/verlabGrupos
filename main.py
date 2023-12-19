@@ -22,7 +22,7 @@ def get_rep_force(q, people, R):
             rep += repulsion_magnitude * ((1/dij) - (1/(2*R))) * (1/pow(dij, 2)) * (vij/dij)
     return rep
 
-def on_click(event):
+def on_click(event): # função que cria os objetivos e associa as pessoas a eles
     global goals, q
     n_goals = np.random.randint(1, NPEOPLE - 1)
     MIN_DISTANCE_BETWEEN_GOALS = 50  
@@ -38,6 +38,17 @@ def on_click(event):
         id_node = q[i][3] 
         q[i] = np.array([q[i][0], q[i][1], goal_idx, id_node])
 
+
+def all_people_stopped(current_positions, previous_positions, threshold=1):
+    if not previous_positions:
+        return False
+
+    for current, previous in zip(current_positions, previous_positions):
+        if abs(current[0] - previous[0]) > threshold or abs(current[1] - previous[1]) > threshold:
+            return False
+
+    return True
+
 # Inicialização
 NPEOPLE = 3
 WORLD   = 400
@@ -46,16 +57,21 @@ goals = [np.array([0, 0]), np.array([0, 0])]
 
 q = generate_people(NPEOPLE, WORLD)
 
+# relacionado a overall_density
 people = [Person(x, y, th, id_node) for x, y, th, id_node in q]
 G = OverallDensity(person=people, zone='Personal', map_resolution=400, window_size=1)
 G.make_graph()
 G.boundary_estimate()
 G.draw(drawDensity=False, drawCluster=True, drawGraph=False)
 
+
+# relacionado aos campos potenciais
 k = 0.03
 max_force = 2.0
 goal = np.array([0, 0])
 
+
+#plotagem
 plt.close('all')
 plt.ion()
 
@@ -70,10 +86,14 @@ plt.axis((-WORLD, WORLD, -WORLD, WORLD))
 cid = fig.canvas.mpl_connect('button_press_event', on_click)
 plt.waitforbuttonpress()
 
+# relacionado ao tempo de mudar uma pessoa de goal
 t = 0
 last_goal_change_time = time.time()
 start_time = time.time()
 
+
+# relacionado a verificar se todos estão parados
+previous_positions = []
 
 while True:
     ax.cla()
@@ -103,10 +123,16 @@ while True:
         
     people = [Person(x, y, th, id_node) for x, y, th, id_node in q]
 
-    G.update_people(people)
-    G.make_graph()
-    G.boundary_estimate()
-    G.draw(drawDensity=False, drawCluster=True, drawGraph=False)
+    current_positions = [[p.x, p.y] for p in people]
+    if all_people_stopped(current_positions, previous_positions):
+        #print("Todas as pessoas estão paradas.")
+
+        G.update_people(people)
+        G.make_graph()
+        G.boundary_estimate()
+        G.draw(drawDensity=False, drawCluster=True, drawGraph=False)
+
+    previous_positions = current_positions.copy()
 
     drawPeople(ax, q, goals, R)
 
